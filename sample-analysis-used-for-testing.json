@@ -1,0 +1,79 @@
+{
+  "version": "1.0",
+  "savedAt": "2025-01-27T15:00:00.000Z",
+  "problemStatement": "We forgot to buy food for breakfast today",
+  "currentWhyLevel": 5,
+  "maxWhyLevel": 5,
+  "languageLevel": 1,
+  "selectedModel": "gemma3:4b",
+  "whyTree": [
+    {
+      "level": 0,
+      "problem": "We forgot to buy food for breakfast today",
+      "children": [
+        {
+          "level": 1,
+          "answer": "We did not go shopping",
+          "children": [
+            {
+              "level": 2,
+              "answer": "We stayed at home",
+              "children": [
+                {
+                  "level": 3,
+                  "answer": "We were too tired",
+                  "children": [
+                    {
+                      "level": 4,
+                      "answer": "We went to bed very late",
+                      "children": [
+                        {
+                          "level": 5,
+                          "answer": "We did not have a bedtime routine",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "qaLog": [
+    {
+      "level": 1,
+      "question": "Why did we forget to buy food?",
+      "answer": "We did not go shopping",
+      "timestamp": "2025-01-27T15:00:00.000Z"
+    },
+    {
+      "level": 2,
+      "question": "Why did we not go shopping?",
+      "answer": "We stayed at home",
+      "timestamp": "2025-01-27T15:01:00.000Z"
+    },
+    {
+      "level": 3,
+      "question": "Why did we stay at home?",
+      "answer": "We were too tired",
+      "timestamp": "2025-01-27T15:02:00.000Z"
+    },
+    {
+      "level": 4,
+      "question": "Why were we too tired?",
+      "answer": "We went to bed very late",
+      "timestamp": "2025-01-27T15:03:00.000Z"
+    },
+    {
+      "level": 5,
+      "question": "Why did we go to bed very late?",
+      "answer": "We did not have a bedtime routine",
+      "timestamp": "2025-01-27T15:04:00.000Z"
+    }
+  ]
+}
+

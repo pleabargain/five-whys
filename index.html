@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Five Whys Analysis Tool</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Five Whys Analysis Tool</h1>
+            <p class="subtitle">Dig deep into root causes through iterative questioning</p>
+        </header>
+
+        <main>
+            <!-- Status Bar -->
+            <div id="status-bar" class="status-bar">
+                <span id="status-model" class="status-model"></span>
+                <span id="status-time" class="status-time"></span>
+            </div>
+
+            <!-- Examples Library -->
+            <section id="examples-section" class="examples-section">
+                <h2>Example Analyses</h2>
+                <p class="examples-intro">Review these examples to understand the Five Whys methodology before starting your own analysis.</p>
+                <div id="examples-grid" class="examples-grid">
+                    <!-- Examples will be populated by JavaScript -->
+                </div>
+            </section>
+
+            <!-- Ollama Model Selection -->
+            <section id="ollama-control-section" class="ollama-control-section">
+                <label for="ollama-model-select" class="ollama-label">
+                    <span>Ollama Model:</span>
+                    <button id="refresh-models" class="btn btn-small">Refresh Models</button>
+                </label>
+                <div class="model-select-container">
+                    <select id="ollama-model-select" class="model-select">
+                        <option value="">Loading models...</option>
+                    </select>
+                    <span id="ollama-status" class="ollama-status"></span>
+                </div>
+            </section>
+
+            <!-- Language Sophistication Control -->
+            <section id="language-control-section" class="language-control-section">
+                <label for="language-level-slider" class="language-label">
+                    <span>Language Sophistication Level:</span>
+                    <span id="language-level-display" class="language-level-display">B1 (Intermediate)</span>
+                </label>
+                <div class="slider-container">
+                    <input 
+                        type="range" 
+                        id="language-level-slider" 
+                        class="language-slider"
+                        min="1" 
+                        max="6" 
+                        value="3"
+                        step="1"
+                    >
+                    <div class="slider-labels">
+                        <span>A1</span>
+                        <span>A2</span>
+                        <span>B1</span>
+                        <span>B2</span>
+                        <span>C1</span>
+                        <span>C2</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Question Section -->
+            <section id="question-section" class="question-section">
+                <div class="question-container">
+                    <h2 id="current-question" class="question-text"></h2>
+                    <div id="question-number" class="question-number"></div>
+                </div>
+                
+                <!-- Answer Input -->
+                <div id="answer-section" class="answer-section">
+                    <textarea 
+                        id="answer-input" 
+                        class="answer-input" 
+                        placeholder="Type a concise description of your problem here"
+                        rows="4"
+                    ></textarea>
+                    <button id="submit-answer" class="btn btn-primary">Submit Answer</button>
+                </div>
+
+                <!-- MCA Section (if applicable) -->
+                <div id="mca-section" class="mca-section hidden">
+                    <h3>Select the most important part:</h3>
+                    <div id="mca-options" class="mca-options"></div>
+                </div>
+            </section>
+
+
+            <!-- Q&A Documentation -->
+            <section id="documentation-section" class="documentation-section">
+                <h2>Question & Answer Log</h2>
+                <div id="qa-log" class="qa-log"></div>
+                <div class="export-buttons">
+                    <button id="export-log" class="btn btn-secondary">Copy to Clipboard</button>
+                    <button id="save-analysis" class="btn btn-secondary">Save Analysis</button>
+                    <button id="load-analysis" class="btn btn-secondary">Load Analysis</button>
+                    <button id="deep-analysis" class="btn btn-secondary">Deep Analysis</button>
+                    <input type="file" id="load-file-input" accept=".json" style="display: none;">
+                </div>
+            </section>
+
+            <!-- Start/Reset Controls -->
+            <div class="controls">
+                <button id="start-analysis" class="btn btn-primary">Start New Analysis</button>
+                <button id="reset-analysis" class="btn btn-secondary hidden">Reset Analysis</button>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="tests.js"></script>
+</body>
+</html>
+
