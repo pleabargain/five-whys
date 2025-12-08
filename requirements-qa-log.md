@@ -1,4 +1,5 @@
 <!-- Repository: https://github.com/pleabargain/five-whys -->
+<!-- Date: 2025-12-08 -->
 # Requirements Gathering Q&A Log
 ## Five Whys Analysis Tool - Project Scope Definition
 

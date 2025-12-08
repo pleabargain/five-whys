@@ -1,4 +1,5 @@
 <!-- Repository: https://github.com/pleabargain/five-whys -->
+<!-- Date: 2025-12-08 -->
 # Five Whys Analysis Tool
 
 A web-based application for performing root cause analysis using the Five Whys methodology. This tool guides users through iterative questioning to uncover the underlying causes of problems.
@@ -56,7 +57,7 @@ A web-based application for performing root cause analysis using the Five Whys m
 ### Prerequisites
 
 - **Ollama**: Must be installed and running (download from https://ollama.ai)
-- **Ollama Model**: At least one model must be downloaded (e.g., `ollama pull llama2`)
+- **Ollama Model**: At least one model must be downloaded (e.g., `ollama pull llam`)
 - **Modern Web Browser**: Chrome, Firefox, Safari, or Edge (latest versions)
 
 ### Running the Application
@@ -148,5 +149,5 @@ This project is provided as-is for educational and personal use.
 
 ---
 
-Last Updated: 2025-01-27
+Last Updated: 2025-12-08
 
