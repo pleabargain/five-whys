@@ -1,3 +1,4 @@
+// Repository: https://github.com/pleabargain/five-whys
 // Language Complexity Adjuster - CEFR Levels (A1-C2)
 class LanguageComplexityAdjuster {
     constructor() {
