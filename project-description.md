@@ -1,5 +1,5 @@
 <!-- Repository: https://github.com/pleabargain/five-whys -->
-<!-- Date: 2026-10-01 -->
+<!-- Date: 2025-12-08 -->
 # Academic Exercise: Root Cause Analysis via Iterative Inquiry and Local Large Language Models
 
 **Curricular Module**: Systems Engineering, Quality Management, and Applied Natural Language Processing  
@@ -133,4 +133,4 @@ Student analytical dossiers are evaluated across four pedagogical dimensions:
 
 ---
 
-*Last Updated: 2026-10-01*
+*Last Updated: 2025-12-08*
