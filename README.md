@@ -9,12 +9,12 @@ A web-based application for performing root cause analysis using the Five Whys m
 ### Quick Start
 
 1. **Install Ollama** (Required)
-   - Download and install Ollama from https://ollama.ai
-   - Start the Ollama service (it should run automatically after installation)
+   - Download and install Ollama from https://ollama.com
+   - Start the Ollama service (it should run automatically after installation at `http://localhost:11434`)
 
 2. **Download a Model**
    - Open a terminal/command prompt
-   - Run: `ollama pull gemma3:4b` (or any other model like `mistral`, `phi`, etc.)
+   - Run: `ollama pull llama3.2` (or other modern models such as `llama3.3`, `qwen2.5`, `deepseek-r1`, `mistral`, `gemma2`, `phi4`)
    - Wait for the model to download
 
 3. **Open the Application**
@@ -56,8 +56,8 @@ A web-based application for performing root cause analysis using the Five Whys m
 
 ### Prerequisites
 
-- **Ollama**: Must be installed and running (download from https://ollama.ai)
-- **Ollama Model**: At least one model must be downloaded (e.g., `ollama pull llam`)
+- **Ollama**: Must be installed and running locally at `http://localhost:11434` (download from https://ollama.com)
+- **Ollama Model**: At least one generative model downloaded (e.g., `ollama pull llama3.2`, `ollama pull qwen2.5`, or `ollama pull deepseek-r1`)
 - **Modern Web Browser**: Chrome, Firefox, Safari, or Edge (latest versions)
 
 ### Running the Application
@@ -109,7 +109,8 @@ Works on all modern browsers:
 ## Technical Details
 
 - Pure JavaScript (no external dependencies)
-- Ollama AI integration for intelligent question generation with professional business analyst prompts
+- Ollama AI integration for intelligent question generation with automated server health checks and thinking-tag sanitization
+- Automatic discovery and filtering of generative chat models (excludes non-generative embedding models)
 - SVG-based tree visualization with proper spacing and layout
 - Responsive design
 - Local browser storage for session data

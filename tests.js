@@ -10,7 +10,7 @@ class FiveWhysTests {
         this.failed = 0;
     }
 
-    runAllTests() {
+    async runAllTests() {
         console.log('=== Running Five Whys Analysis Tool Tests ===\n');
         
         this.testValidateSaveData();
@@ -22,6 +22,9 @@ class FiveWhysTests {
         this.testSaveAnalysis();
         this.testLanguageLevelEnforcement();
         this.testSaveDataValidation();
+        this.testCleanResponseThinkingTags();
+        this.testFilterGenerativeModels();
+        await this.testCheckServerActive();
         
         this.printResults();
     }
@@ -763,6 +766,119 @@ class FiveWhysTests {
             'validateSaveData with deeply nested structure',
             'Should pass validation'
         );
+    }
+
+    // Test reasoning model <think> tag removal
+    testCleanResponseThinkingTags() {
+        console.log('\n--- Testing Reasoning Model <think> Tag Removal ---');
+        
+        const ollama = new OllamaIntegration();
+        
+        const reasoningOutput = '<think>\nAnalyzing the causal factors...\nThe problem occurred due to budget constraints.\n</think>\n\nWhy did the budget constraints prevent proper maintenance?';
+        const cleaned = ollama.cleanResponse(reasoningOutput);
+        
+        this.assert(
+            !cleaned.includes('<think>') && !cleaned.includes('</think>') && !cleaned.includes('Analyzing the causal factors'),
+            'cleanResponse strips <think> reasoning blocks',
+            `Expected think block removed, got: "${cleaned}"`
+        );
+        this.assert(
+            cleaned === 'Why did the budget constraints prevent proper maintenance?',
+            'cleanResponse retains actual question content after think block',
+            `Got: "${cleaned}"`
+        );
+        
+        const standardOutput = 'Why did the server encounter a memory exhaustion error?';
+        this.assert(
+            ollama.cleanResponse(standardOutput) === standardOutput,
+            'cleanResponse preserves standard output without think tags'
+        );
+    }
+
+    // Test generative vs embedding model filtering
+    testFilterGenerativeModels() {
+        console.log('\n--- Testing Generative Model Filtering ---');
+        
+        const ollama = new OllamaIntegration();
+        
+        const testModels = [
+            { name: 'llama3.2:latest', capabilities: ['completion'] },
+            { name: 'deepseek-r1:7b', capabilities: ['completion', 'thinking'] },
+            { name: 'qwen2.5:7b', capabilities: ['completion'] },
+            { name: 'nomic-embed-text:latest', capabilities: ['embedding'] },
+            { name: 'bge-m3:latest', details: { family: 'bert' } },
+            { name: 'all-minilm:latest' }
+        ];
+        
+        const filtered = ollama.filterGenerativeModels(testModels);
+        const filteredNames = filtered.map(m => m.name);
+        
+        this.assert(
+            filteredNames.includes('llama3.2:latest') && 
+            filteredNames.includes('deepseek-r1:7b') && 
+            filteredNames.includes('qwen2.5:7b'),
+            'filterGenerativeModels keeps generative chat models',
+            `Got: ${JSON.stringify(filteredNames)}`
+        );
+        
+        this.assert(
+            !filteredNames.includes('nomic-embed-text:latest') && 
+            !filteredNames.includes('bge-m3:latest') && 
+            !filteredNames.includes('all-minilm:latest'),
+            'filterGenerativeModels removes embedding-only models',
+            `Got: ${JSON.stringify(filteredNames)}`
+        );
+    }
+
+    // Test server active check
+    async testCheckServerActive() {
+        console.log('\n--- Testing checkServerActive ---');
+        
+        const ollama = new OllamaIntegration();
+        const originalFetch = globalThis.fetch;
+        
+        try {
+            // Mock active server response
+            globalThis.fetch = async (url) => {
+                if (String(url).includes('/api/version')) {
+                    return {
+                        ok: true,
+                        status: 200,
+                        json: async () => ({ version: '0.30.4' })
+                    };
+                }
+                return { ok: false, status: 404 };
+            };
+            
+            const activeResult = await ollama.checkServerActive();
+            this.assert(
+                activeResult.active === true && activeResult.version === '0.30.4',
+                'checkServerActive detects active server and version',
+                `Expected active: true, version: 0.30.4, got ${JSON.stringify(activeResult)}`
+            );
+            this.assert(
+                ollama.serverActive === true && ollama.serverVersion === '0.30.4',
+                'checkServerActive updates instance state on success'
+            );
+
+            // Mock offline server (fetch failure)
+            globalThis.fetch = async () => {
+                throw new Error('Connection refused');
+            };
+
+            const offlineResult = await ollama.checkServerActive();
+            this.assert(
+                offlineResult.active === false && typeof offlineResult.error === 'string',
+                'checkServerActive detects offline server',
+                `Expected active: false, got ${JSON.stringify(offlineResult)}`
+            );
+            this.assert(
+                ollama.serverActive === false,
+                'checkServerActive updates instance state to false on failure'
+            );
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
     }
 
     printResults() {

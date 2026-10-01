@@ -158,6 +158,72 @@ class OllamaIntegration {
         this.selectedModel = null;
         this.availableModels = [];
         this.lastResponseTime = null;
+        this.serverActive = false;
+        this.serverVersion = null;
+    }
+
+    async checkServerActive() {
+        console.log('[Ollama] Verifying server status...');
+        try {
+            const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+            const timeoutId = controller ? setTimeout(() => controller.abort(), 3000) : null;
+            
+            const options = { method: 'GET' };
+            if (controller) options.signal = controller.signal;
+            
+            const response = await fetch(`${this.baseUrl}/api/version`, options);
+            if (timeoutId) clearTimeout(timeoutId);
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.serverActive = true;
+                this.serverVersion = data.version || 'active';
+                console.log(`[Ollama] Server active (version: ${this.serverVersion})`);
+                return { active: true, version: this.serverVersion };
+            } else {
+                this.serverActive = false;
+                console.warn(`[Ollama] Server returned HTTP ${response.status}`);
+                return { active: false, error: `HTTP ${response.status}` };
+            }
+        } catch (error) {
+            this.serverActive = false;
+            console.warn('[Ollama] Server check failed:', error.message);
+            return { active: false, error: error.message };
+        }
+    }
+
+    cleanResponse(text) {
+        if (!text || typeof text !== 'string') return '';
+        // Remove <think>...</think> reasoning blocks from modern reasoning models (e.g., DeepSeek-R1, QwQ, Qwen-Thinking)
+        let cleaned = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+        return cleaned;
+    }
+
+    filterGenerativeModels(models) {
+        if (!Array.isArray(models)) return [];
+        return models.filter(model => {
+            const name = (model.name || '').toLowerCase();
+            const caps = Array.isArray(model.capabilities) ? model.capabilities : [];
+            
+            // If model explicitly reports capabilities (Ollama v0.5+ / v0.30+)
+            if (caps.length > 0) {
+                if (caps.includes('embedding') && !caps.includes('completion')) {
+                    return false;
+                }
+            }
+            
+            // Exclude common embedding or non-text-completion architectures
+            if (name.includes('embed') || name.includes('bge-') || name.includes('all-minilm')) {
+                return false;
+            }
+            
+            const family = (model.details?.family || '').toLowerCase();
+            if (family.includes('nomic-bert') || (family.includes('bert') && !family.includes('roberta'))) {
+                return false;
+            }
+            
+            return true;
+        });
     }
 
     async fetchModels() {
@@ -176,8 +242,12 @@ class OllamaIntegration {
             const data = await response.json();
             console.log('[Ollama] Models response data:', data);
             this.availableModels = data.models || [];
-            const modelNames = this.availableModels.map(model => model.name);
-            console.log(`[Ollama] Found ${modelNames.length} model(s):`, modelNames);
+            this.serverActive = true;
+
+            const generativeModels = this.filterGenerativeModels(this.availableModels);
+            const modelsToUse = generativeModels.length > 0 ? generativeModels : this.availableModels;
+            const modelNames = modelsToUse.map(model => model.name);
+            console.log(`[Ollama] Found ${modelNames.length} generative model(s):`, modelNames);
             return modelNames;
         } catch (error) {
             console.error('[Ollama] Error fetching models:', error);
@@ -230,14 +300,16 @@ class OllamaIntegration {
             const endTime = performance.now();
             const responseTime = ((endTime - startTime) / 1000).toFixed(2); // Convert to seconds with 2 decimals
 
+            const cleanedResponse = this.cleanResponse(data.response || '');
+
             console.log(`[Ollama] Response received in ${responseTime}s`);
-            console.log(`[Ollama] Response preview: ${(data.response || '').substring(0, 200)}${(data.response || '').length > 200 ? '...' : ''}`);
-            console.log(`[Ollama] Full response length: ${(data.response || '').length} characters`);
+            console.log(`[Ollama] Response preview: ${cleanedResponse.substring(0, 200)}${cleanedResponse.length > 200 ? '...' : ''}`);
+            console.log(`[Ollama] Full response length: ${cleanedResponse.length} characters`);
 
             // Store response time for status bar display
             this.lastResponseTime = responseTime;
             
-            return { response: data.response || '', responseTime: responseTime };
+            return { response: cleanedResponse, responseTime: responseTime };
         } catch (error) {
             console.error('[Ollama] Error generating:', error);
             console.error('[Ollama] Error details:', {
@@ -886,18 +958,34 @@ class FiveWhysApp {
     }
 
     async loadOllamaModels() {
-        this.ollamaStatus.textContent = 'Loading...';
+        this.ollamaStatus.textContent = 'Checking server...';
         this.ollamaStatus.className = 'ollama-status loading';
         
         try {
+            if (!this.ollamaIntegration || typeof this.ollamaIntegration.checkServerActive !== 'function') {
+                return;
+            }
+            const serverStatus = await this.ollamaIntegration.checkServerActive();
+            if (!serverStatus.active) {
+                this.ollamaModelSelect.innerHTML = '<option value="">Ollama offline (http://localhost:11434)</option>';
+                this.ollamaStatus.textContent = 'Not connected';
+                this.ollamaStatus.className = 'ollama-status error';
+                this.updateStatusBar();
+                return;
+            }
+
+            if (typeof this.ollamaIntegration.fetchModels !== 'function') {
+                return;
+            }
             const models = await this.ollamaIntegration.fetchModels();
             
             // Clear existing options
             this.ollamaModelSelect.innerHTML = '';
             
             if (models.length === 0) {
-                this.ollamaModelSelect.innerHTML = '<option value="">No models found. Is Ollama running?</option>';
-                this.ollamaStatus.textContent = 'Not connected';
+                this.ollamaModelSelect.innerHTML = '<option value="">No models found. Run "ollama pull <model>"</option>';
+                const versionInfo = serverStatus.version ? ` (v${serverStatus.version})` : '';
+                this.ollamaStatus.textContent = `Connected${versionInfo}, no models`;
                 this.ollamaStatus.className = 'ollama-status error';
             } else {
                 // Add "None" option
@@ -914,7 +1002,8 @@ class FiveWhysApp {
                     this.ollamaModelSelect.appendChild(option);
                 });
                 
-                this.ollamaStatus.textContent = `${models.length} model(s) available`;
+                const versionInfo = serverStatus.version ? ` (v${serverStatus.version})` : '';
+                this.ollamaStatus.textContent = `${models.length} model(s) available${versionInfo}`;
                 this.ollamaStatus.className = 'ollama-status success';
             }
         } catch (error) {
@@ -969,10 +1058,16 @@ class FiveWhysApp {
         }
     }
 
-    startAnalysis() {
+    async startAnalysis() {
         // Validate Ollama is available
         if (!this.ollamaIntegration.isAvailable()) {
             alert('Please select an Ollama model before starting the analysis. Ollama is required for this application.');
+            return;
+        }
+
+        const serverStatus = await this.ollamaIntegration.checkServerActive();
+        if (!serverStatus.active) {
+            alert(`Ollama server is not responding at ${this.ollamaIntegration.baseUrl}. Please ensure Ollama is active before starting.`);
             return;
         }
 
@@ -1412,6 +1507,12 @@ class FiveWhysApp {
 
         if (!this.ollamaIntegration.isAvailable()) {
             alert('Ollama is required for Deep Analysis. Please select a model first.');
+            return;
+        }
+
+        const serverStatus = await this.ollamaIntegration.checkServerActive();
+        if (!serverStatus.active) {
+            alert(`Ollama server is not responding at ${this.ollamaIntegration.baseUrl}. Please ensure Ollama is active.`);
             return;
         }
 
